@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Log Analyzer</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  h1 { font-size: 1.6rem; }
+  button { padding: .5rem 1rem; font-size: 1rem; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { text-align: left; padding: .5rem; border-bottom: 1px solid #ddd; }
+  .High { color: #b00020; font-weight: 600; }
+  .Medium { color: #b26a00; font-weight: 600; }
+  pre { white-space: pre-wrap; background: #f4f4f4; padding: 1rem; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <h1>Security Log Analyzer</h1>
+  <p>Upload an SSH auth log to find brute force attempts.</p>
+  <input type="file" id="file">
+  <button onclick="upload()">Analyze log</button>
+  <div id="result"></div>
+<script>
+async function upload() {
+  const f = document.getElementById("file").files[0];
+  if (!f) { alert("Choose a log file first."); return; }
+  const data = new FormData();
+  data.append("file", f);
+  const res = await fetch("/upload", { method: "POST", body: data });
+  const out = await res.json();
+  let html = "";
+  if (out.alerts.length) {
+    html += "<table><tr><th>IP</th><th>Type</th><th>Count</th><th>Severity</th></tr>";
+    for (const a of out.alerts)
+      html += `<tr><td>${a.ip}</td><td>${a.type}</td><td>${a.count}</td><td class="${a.severity}">${a.severity}</td></tr>`;
+    html += "</table>";
+  }
+  const p = document.createElement("pre");
+  p.textContent = out.summary;
+  document.getElementById("result").innerHTML = html;
+  document.getElementById("result").appendChild(p);
+}
+</script>
+</body>
+</html>
